@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { User } from "@shared/schema";
 
 interface AuthContextType {
@@ -17,18 +17,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, refetch } = useQuery<User | null, Error>({
     queryKey: ["/api/auth/me"],
-    onError: () => {
-      setUser(null);
-    },
-    onSuccess: (data) => {
-      if (data) {
-        setUser(data);
-      } else {
-        setUser(null);
-      }
-    },
+    queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
   useEffect(() => {
