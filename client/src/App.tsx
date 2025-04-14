@@ -8,6 +8,9 @@ import Dashboard from "@/pages/Dashboard";
 import ConnectAccount from "@/pages/ConnectAccount";
 import AuthPage from "@/pages/auth-page";
 import PricingPage from "@/pages/pricing-page";
+import SettingsPage from "@/pages/settings-page";
+import ReportsPage from "@/pages/reports-page";
+import HelpPage from "@/pages/help-page";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 
@@ -17,6 +20,9 @@ function Router() {
       <Route path="/" component={Home} />
       <ProtectedRoute path="/dashboard" component={Dashboard} />
       <ProtectedRoute path="/connect" component={ConnectAccount} />
+      <ProtectedRoute path="/settings" component={SettingsPage} />
+      <ProtectedRoute path="/reports" component={ReportsPage} />
+      <ProtectedRoute path="/help" component={HelpPage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/login" component={AuthPage} />
       <Route path="/signup" component={AuthPage} />

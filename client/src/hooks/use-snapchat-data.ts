@@ -60,6 +60,7 @@ export function useSnapchatData() {
     isConnected,
     isLoading,
     error,
+    data, // Make the raw data available for reports page
     refreshData,
     audienceGrowthData,
     demographicsData,
