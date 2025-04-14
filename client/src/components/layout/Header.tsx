@@ -1,16 +1,33 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Logo } from "@/components/common/Logo";
 import { PremiumBadge } from "@/components/common/PremiumBadge";
 import { UserAvatar } from "@/components/common/UserAvatar";
 import { useAuth } from "@/hooks/use-auth";
 import { MobileMenu } from "@/components/layout/MobileMenu";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { LogOut, Settings, User, Menu, BarChart } from "lucide-react";
 
 export function Header() {
-  const { user } = useAuth();
+  const { user, logoutMutation } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [_, setLocation] = useLocation();
+
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+      setLocation('/auth');
+    } catch (error) {
+      console.error('Logout failed', error);
+    }
+  };
 
   return (
     <header className="bg-white shadow-md sticky top-0 z-50">
@@ -33,7 +50,40 @@ export function Header() {
               </Link>
               
               <PremiumBadge isPremium={user.subscription === "premium"} />
-              <UserAvatar username={user.username} />
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <div className="cursor-pointer">
+                    <UserAvatar username={user.username} />
+                  </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <div className="px-2 py-1.5 text-sm font-medium">
+                    {user.username}
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard" className="flex cursor-pointer items-center">
+                      <BarChart className="mr-2 h-4 w-4" />
+                      <span>Dashboard</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings" className="flex cursor-pointer items-center">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={handleLogout}
+                    className="text-red-500 focus:text-red-500 cursor-pointer"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Logout</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </nav>
             
             <Button 
@@ -56,12 +106,12 @@ export function Header() {
             <Link href="/connect" className="text-foreground font-medium hover:text-primary transition-colors">
               Connect Snapchat
             </Link>
-            <Link href="/login">
+            <Link href="/auth">
               <Button variant="outline" size="sm">
                 Log in
               </Button>
             </Link>
-            <Link href="/signup">
+            <Link href="/auth">
               <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
                 Sign up
               </Button>

@@ -21,7 +21,7 @@ export function MobileMenu({ isOpen, onClose, isPremium, username }: MobileMenuP
     try {
       await logoutMutation.mutateAsync();
       onClose();
-      navigate('/');
+      navigate('/auth');
     } catch (error) {
       console.error("Failed to logout:", error);
     }
