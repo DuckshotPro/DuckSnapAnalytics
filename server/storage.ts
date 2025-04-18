@@ -16,6 +16,8 @@ import {
   oauthTokens,
   OAuthToken,
   InsertOAuthToken,
+  consentLogs,
+  ConsentLog,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
@@ -200,15 +202,40 @@ export class DatabaseStorage implements IStorage {
    * @param userId - The user's ID
    * @param clientId - Snapchat client ID
    * @param apiKey - Snapchat API key
+   * @param consentData - Optional consent data including dataConsent flag, date, and privacy policy version
    * @returns The updated user object
    * @throws Error if user not found
    */
-  async updateUserSnapchatCredentials(userId: number, clientId: string, apiKey: string): Promise<User> {
+  async updateUserSnapchatCredentials(
+    userId: number, 
+    clientId: string, 
+    apiKey: string, 
+    consentData?: {
+      dataConsent?: boolean;
+      consentDate?: string;
+      privacyPolicyVersion?: string;
+    }
+  ): Promise<User> {
+    const updateData: any = {
+      snapchatClientId: clientId,
+      snapchatApiKey: apiKey
+    };
+    
+    // Add consent data if provided
+    if (consentData) {
+      if (consentData.dataConsent !== undefined) {
+        updateData.dataConsent = consentData.dataConsent;
+      }
+      if (consentData.consentDate) {
+        updateData.consentDate = consentData.consentDate;
+      }
+      if (consentData.privacyPolicyVersion) {
+        updateData.privacyPolicyVersion = consentData.privacyPolicyVersion;
+      }
+    }
+    
     const [user] = await db.update(users)
-      .set({
-        snapchatClientId: clientId,
-        snapchatApiKey: apiKey
-      })
+      .set(updateData)
       .where(eq(users.id, userId))
       .returning();
     
@@ -440,3 +467,41 @@ import { pool } from "./db";
  * It uses the DatabaseStorage implementation for persistent storage.
  */
 export const storage = new DatabaseStorage();
+
+/**
+ * Log a user consent action for GDPR compliance
+ * @param userId - The user's ID
+ * @param action - The consent action ("granted", "withdrawn", "updated")
+ * @param detail - Optional details about the consent action
+ * @param privacyPolicyVersion - The version of the privacy policy
+ * @param request - Express request object to capture IP and user agent (optional)
+ * @returns The logged consent entry
+ */
+export async function logConsent(
+  userId: number, 
+  action: string, 
+  detail?: string,
+  privacyPolicyVersion?: string,
+  request?: any // Express request
+): Promise<ConsentLog> {
+  const data: any = {
+    userId,
+    action,
+    createdAt: new Date()
+  };
+  
+  if (detail) data.detail = detail;
+  if (privacyPolicyVersion) data.privacyPolicyVersion = privacyPolicyVersion;
+  
+  // Add IP and user agent if request is provided
+  if (request) {
+    data.ipAddress = request.ip || request.headers['x-forwarded-for'] || request.connection?.remoteAddress;
+    data.userAgent = request.headers['user-agent'];
+  }
+  
+  const [logEntry] = await db.insert(consentLogs)
+    .values(data)
+    .returning();
+  
+  return logEntry;
+}

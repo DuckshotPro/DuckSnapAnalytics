@@ -178,7 +178,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const user = req.user as User;
-      await storage.updateUserSnapchatCredentials(user.id, req.body.snapchatClientId, req.body.snapchatApiKey);
+      
+      // Prepare consent data
+      const consentData = {
+        dataConsent: req.body.dataConsent === true,
+        consentDate: req.body.consentDate,
+        privacyPolicyVersion: req.body.privacyPolicyVersion || "1.0"
+      };
+      
+      // Update user with API credentials and consent data
+      await storage.updateUserSnapchatCredentials(
+        user.id, 
+        req.body.snapchatClientId, 
+        req.body.snapchatApiKey,
+        consentData
+      );
+      
+      // Log the consent action
+      if (consentData.dataConsent) {
+        await logConsent(
+          user.id,
+          "granted",
+          "Snapchat account connection consent granted",
+          consentData.privacyPolicyVersion,
+          req
+        );
+      }
 
       // Fetch initial data after connecting
       try {
@@ -189,8 +214,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Still connect even if initial data fetch fails
       }
 
-      res.json({ message: "Snapchat account connected successfully" });
+      res.json({ 
+        message: "Snapchat account connected successfully", 
+        dataConsent: consentData.dataConsent 
+      });
     } catch (error) {
+      console.error("Error connecting Snapchat account:", error);
       res.status(500).json({ message: "Error connecting Snapchat account" });
     }
   });
