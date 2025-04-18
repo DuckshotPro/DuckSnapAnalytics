@@ -13,9 +13,12 @@ import {
   SnapchatData,
   aiInsights,
   AiInsight,
+  oauthTokens,
+  OAuthToken,
+  InsertOAuthToken,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 
@@ -94,6 +97,38 @@ export interface IStorage {
    * @returns The latest insight or undefined if none exists
    */
   getLatestAiInsight(userId: number): Promise<AiInsight | undefined>;
+  
+  /**
+   * Gets OAuth tokens for a user by provider
+   * @param userId - The user's ID
+   * @param provider - The OAuth provider name (e.g., "snapchat")
+   * @returns The OAuth token or undefined if not found
+   */
+  getOAuthToken(userId: number, provider: string): Promise<OAuthToken | undefined>;
+  
+  /**
+   * Gets a user by their provider ID
+   * @param provider - The OAuth provider name
+   * @param providerUserId - The user ID from the provider
+   * @returns The user ID or undefined if not found
+   */
+  getUserByProviderId(provider: string, providerUserId: string): Promise<number | undefined>;
+  
+  /**
+   * Saves or updates OAuth tokens for a user
+   * @param tokenData - The OAuth token data to save
+   * @returns The saved token record
+   */
+  saveOAuthToken(tokenData: InsertOAuthToken): Promise<OAuthToken>;
+  
+  /**
+   * Updates user profile data from OAuth
+   * @param userId - The user's ID
+   * @param displayName - The user's display name
+   * @param profilePictureUrl - URL to the user's profile picture
+   * @returns The updated user
+   */
+  updateUserProfile(userId: number, displayName?: string, profilePictureUrl?: string): Promise<User>;
   
   /**
    * Session store for persistence
@@ -274,6 +309,124 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
     
     return latestInsight;
+  }
+
+  /**
+   * Gets OAuth tokens for a user by provider
+   * @param userId - The user's ID
+   * @param provider - The OAuth provider name (e.g., "snapchat")
+   * @returns The OAuth token or undefined if not found
+   */
+  async getOAuthToken(userId: number, provider: string): Promise<OAuthToken | undefined> {
+    const [token] = await db.select()
+      .from(oauthTokens)
+      .where(
+        and(
+          eq(oauthTokens.userId, userId),
+          eq(oauthTokens.provider, provider)
+        )
+      );
+    
+    return token;
+  }
+  
+  /**
+   * Gets a user by their provider ID
+   * @param provider - The OAuth provider name
+   * @param providerUserId - The user ID from the provider
+   * @returns The user ID or undefined if not found
+   */
+  async getUserByProviderId(provider: string, providerUserId: string): Promise<number | undefined> {
+    const [token] = await db.select({
+      userId: oauthTokens.userId
+    })
+    .from(oauthTokens)
+    .where(
+      and(
+        eq(oauthTokens.provider, provider),
+        eq(oauthTokens.providerUserId, providerUserId)
+      )
+    )
+    .limit(1);
+    
+    return token?.userId;
+  }
+  
+  /**
+   * Saves or updates OAuth tokens for a user
+   * @param tokenData - The OAuth token data to save
+   * @returns The saved token record
+   */
+  async saveOAuthToken(tokenData: InsertOAuthToken): Promise<OAuthToken> {
+    // Check for existing token
+    const existingToken = await this.getOAuthToken(tokenData.userId, tokenData.provider as string);
+    
+    if (existingToken) {
+      // Update existing token
+      const [updatedToken] = await db.update(oauthTokens)
+        .set({
+          accessToken: tokenData.accessToken,
+          refreshToken: tokenData.refreshToken,
+          scope: tokenData.scope,
+          expiresAt: tokenData.expiresAt,
+          updatedAt: new Date()
+        })
+        .where(eq(oauthTokens.id, existingToken.id))
+        .returning();
+      
+      return updatedToken;
+    } else {
+      // Create new token
+      const now = new Date();
+      const [newToken] = await db.insert(oauthTokens)
+        .values({
+          ...tokenData,
+          createdAt: now,
+          updatedAt: now
+        })
+        .returning();
+      
+      return newToken;
+    }
+  }
+  
+  /**
+   * Updates user profile data from OAuth
+   * @param userId - The user's ID
+   * @param displayName - The user's display name
+   * @param profilePictureUrl - URL to the user's profile picture
+   * @returns The updated user
+   */
+  async updateUserProfile(userId: number, displayName?: string, profilePictureUrl?: string): Promise<User> {
+    const updateData: any = {};
+    
+    if (displayName !== undefined) {
+      updateData.displayName = displayName;
+    }
+    
+    if (profilePictureUrl !== undefined) {
+      updateData.profilePictureUrl = profilePictureUrl;
+    }
+    
+    // Only update if we have changes
+    if (Object.keys(updateData).length === 0) {
+      const user = await this.getUser(userId);
+      if (!user) {
+        throw new Error("User not found");
+      }
+      return user;
+    }
+    
+    const [user] = await db.update(users)
+      .set(updateData)
+      .where(eq(users.id, userId))
+      .returning();
+    
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    return user;
   }
 }
 

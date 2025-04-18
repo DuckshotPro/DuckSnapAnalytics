@@ -1,3 +1,10 @@
+/**
+ * API Routes Configuration
+ * 
+ * This file sets up all backend routes for the DuckShots SnapAlytics application,
+ * including authentication, Snapchat API integration, and subscription management.
+ */
+
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -10,6 +17,7 @@ import { fetchSnapchatData } from "./services/snapchat";
 import { generateAiInsight } from "./services/gemini";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
+import { setupOAuth } from "./oauth";
 
 const scryptAsync = promisify(scrypt);
 
@@ -72,6 +80,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       done(err);
     }
   });
+
+  // Set up OAuth authentication
+  setupOAuth(app);
 
   // Authentication middleware
   const isAuthenticated = (req: Request, res: Response, next: Function) => {

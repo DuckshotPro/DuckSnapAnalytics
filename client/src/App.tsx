@@ -1,3 +1,10 @@
+/**
+ * DuckShots SnapAlytics Application
+ * 
+ * This is the main application component that sets up the application structure,
+ * including routing, state management providers, and global UI components.
+ */
+
 import { Switch, Route } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
@@ -14,24 +21,47 @@ import HelpPage from "@/pages/help-page";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 
+/**
+ * Application Router
+ * 
+ * Defines all routes for the application, including:
+ * - Public routes accessible without authentication
+ * - Protected routes that require user authentication
+ * 
+ * Uses Wouter for lightweight client-side routing.
+ */
 function Router() {
   return (
     <Switch>
+      {/* Public Routes */}
       <Route path="/" component={Home} />
+      <Route path="/auth" component={AuthPage} />
+      <Route path="/login" component={AuthPage} />
+      <Route path="/signup" component={AuthPage} />
+      <Route path="/pricing" component={PricingPage} />
+      
+      {/* Protected Routes (require authentication) */}
       <ProtectedRoute path="/dashboard" component={Dashboard} />
       <ProtectedRoute path="/connect" component={ConnectAccount} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/reports" component={ReportsPage} />
       <ProtectedRoute path="/help" component={HelpPage} />
-      <Route path="/auth" component={AuthPage} />
-      <Route path="/login" component={AuthPage} />
-      <Route path="/signup" component={AuthPage} />
-      <Route path="/pricing" component={PricingPage} />
+      
+      {/* 404 Not Found Route */}
       <Route component={NotFound} />
     </Switch>
   );
 }
 
+/**
+ * Main Application Component
+ * 
+ * Sets up the application with necessary providers:
+ * - QueryClientProvider: for data fetching and caching
+ * - AuthProvider: for authentication state management
+ * 
+ * Also includes global UI components like Toaster for notifications.
+ */
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
