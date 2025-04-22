@@ -14,11 +14,11 @@ import { Link, useLocation } from "wouter";
 
 // Mock admin data for system logs and metrics
 const systemLogs = [
-  { id: 1, timestamp: "2023-04-21 11:42:24", level: "INFO", message: "User login successful: Duck" },
-  { id: 2, timestamp: "2023-04-21 11:42:44", level: "INFO", message: "Snapchat data refreshed for user: Duck" },
-  { id: 3, timestamp: "2023-04-21 11:39:08", level: "INFO", message: "Insights generated for user: Duck" },
-  { id: 4, timestamp: "2023-04-21 11:38:51", level: "WARNING", message: "Failed login attempt for user: Duck" },
-  { id: 5, timestamp: "2023-04-21 11:38:22", level: "WARNING", message: "User registration failed: username already exists" },
+  { id: 1, timestamp: "2025-04-22 00:00:32", level: "INFO", message: "HTTP 200", context: { method: "POST", url: "/api/auth/login", duration: "124ms", ip: "192.168.1.101", userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" } },
+  { id: 2, timestamp: "2025-04-22 00:00:33", level: "INFO", message: "Server started successfully", context: { port: 5000, host: "0.0.0.0" } },
+  { id: 3, timestamp: "2025-04-22 00:01:08", level: "INFO", message: "HTTP 200", context: { method: "GET", url: "/api/analytics/user/Duck", duration: "238ms", ip: "192.168.1.101", user: "Duck" } },
+  { id: 4, timestamp: "2025-04-22 00:01:22", level: "WARNING", message: "HTTP 401", context: { method: "GET", url: "/api/auth/me", duration: "2ms", ip: "192.168.1.103" } },
+  { id: 5, timestamp: "2025-04-22 00:01:45", level: "ERROR", message: "Error processing request: Database connection failed", context: { status: 500, path: "/api/analytics/refresh", method: "POST", user: "Duck" } },
 ];
 
 const userMetrics = [
@@ -41,6 +41,10 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [loggingLevel, setLoggingLevel] = useState("info");
   const [dataRetentionDays, setDataRetentionDays] = useState("90");
+  
+  // State for log filtering
+  const [logFilter, setLogFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Check if user is admin, redirect if not
   useEffect(() => {
@@ -248,6 +252,27 @@ export default function AdminDashboard() {
               <CardDescription>Recent system activity and events</CardDescription>
             </CardHeader>
             <CardContent>
+              <div className="flex gap-4 mb-4">
+                <div className="flex-1">
+                  <Input 
+                    placeholder="Search logs..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="dark-input"
+                  />
+                </div>
+                <Select value={logFilter} onValueChange={setLogFilter}>
+                  <SelectTrigger className="w-[180px] dark-input">
+                    <SelectValue placeholder="Filter by level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Levels</SelectItem>
+                    <SelectItem value="info">Info Only</SelectItem>
+                    <SelectItem value="warning">Warnings Only</SelectItem>
+                    <SelectItem value="error">Errors Only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="relative overflow-x-auto rounded-md">
                 <table className="w-full text-sm text-left">
                   <thead className="text-xs uppercase bg-secondary text-secondary-foreground">
@@ -255,10 +280,39 @@ export default function AdminDashboard() {
                       <th scope="col" className="px-6 py-3">Timestamp</th>
                       <th scope="col" className="px-6 py-3">Level</th>
                       <th scope="col" className="px-6 py-3">Message</th>
+                      <th scope="col" className="px-6 py-3">Details</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {systemLogs.map((log) => (
+                    {systemLogs
+                      .filter(log => {
+                        // Filter by log level
+                        if (logFilter !== 'all' && log.level.toLowerCase() !== logFilter.toLowerCase()) {
+                          return false;
+                        }
+                        
+                        // Filter by search query
+                        if (searchQuery) {
+                          const searchLower = searchQuery.toLowerCase();
+                          const messageMatch = log.message.toLowerCase().includes(searchLower);
+                          const levelMatch = log.level.toLowerCase().includes(searchLower);
+                          const timestampMatch = log.timestamp.toLowerCase().includes(searchLower);
+                          
+                          // Search in context values
+                          let contextMatch = false;
+                          if (log.context) {
+                            contextMatch = Object.entries(log.context).some(([key, value]) => {
+                              return key.toLowerCase().includes(searchLower) || 
+                                    (value as string).toLowerCase().includes(searchLower);
+                            });
+                          }
+                          
+                          return messageMatch || levelMatch || timestampMatch || contextMatch;
+                        }
+                        
+                        return true;
+                      })
+                      .map((log) => (
                       <tr key={log.id} className="border-b border-border">
                         <td className="px-6 py-4">{log.timestamp}</td>
                         <td className="px-6 py-4">
@@ -273,6 +327,17 @@ export default function AdminDashboard() {
                           </span>
                         </td>
                         <td className="px-6 py-4">{log.message}</td>
+                        <td className="px-6 py-4">
+                          {log.context && (
+                            <div className="text-xs text-muted-foreground space-y-1">
+                              {Object.entries(log.context).map(([key, value]) => (
+                                <div key={key}>
+                                  <span className="font-medium">{key}:</span> {value as string}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
