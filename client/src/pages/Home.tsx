@@ -7,11 +7,11 @@ import { useAuth } from "@/hooks/use-auth";
 
 export default function Home() {
   const { user } = useAuth();
-  
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
-      
+
       <main className="flex-1">
         {/* Hero Section */}
         <section className="py-12 md:py-20 bg-gradient-to-b from-primary/10 to-background">
@@ -47,12 +47,12 @@ export default function Home() {
             </div>
           </div>
         </section>
-        
+
         {/* Features Section */}
         <section className="py-12 bg-white">
           <div className="container mx-auto px-4">
             <h2 className="text-2xl md:text-3xl font-bold text-center mb-12">Powerful Analytics at Your Fingertips</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="snap-card p-6 text-center">
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -63,7 +63,7 @@ export default function Home() {
                 <h3 className="text-xl font-semibold mb-2">Comprehensive Dashboard</h3>
                 <p className="text-muted-foreground">View all your key metrics in one place with our intuitive dashboard.</p>
               </div>
-              
+
               <div className="snap-card p-6 text-center">
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
@@ -73,7 +73,7 @@ export default function Home() {
                 <h3 className="text-xl font-semibold mb-2">Audience Insights</h3>
                 <p className="text-muted-foreground">Understand your audience demographics and engagement patterns.</p>
               </div>
-              
+
               <div className="snap-card p-6 text-center">
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
@@ -86,7 +86,7 @@ export default function Home() {
             </div>
           </div>
         </section>
-        
+
         {/* Premium Section */}
         <section className="py-12 bg-muted">
           <div className="container mx-auto px-4">
@@ -114,7 +114,7 @@ export default function Home() {
                       <p className="text-sm text-muted-foreground mt-1">AI analyzes your top-performing content and provides recommendations for future posts.</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start space-x-3 mb-4">
                     <div className="w-10 h-10 bg-accent rounded-md flex items-center justify-center flex-shrink-0">
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
@@ -126,7 +126,7 @@ export default function Home() {
                       <p className="text-sm text-muted-foreground mt-1">Get personalized strategies to grow your audience based on your specific data.</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start space-x-3">
                     <div className="w-10 h-10 bg-accent rounded-md flex items-center justify-center flex-shrink-0">
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
@@ -143,7 +143,7 @@ export default function Home() {
             </div>
           </div>
         </section>
-        
+
         {/* CTA Section */}
         <section className="py-16 bg-gradient-to-r from-primary to-yellow-400">
           <div className="container mx-auto px-4 text-center">
@@ -151,15 +151,18 @@ export default function Home() {
             <p className="text-lg text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
               Join thousands of content creators who use DuckShots SnapAlytics to grow their audience and improve engagement.
             </p>
-            <Link href="/connect">
-              <Button size="lg" className="bg-white text-primary hover:bg-gray-100">
-                Get Started Free
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" asChild>
+                <Link href="/auth">Get Started Free</Link>
               </Button>
-            </Link>
+              <Button variant="outline" size="lg" asChild>
+                <Link href="/snapchat-prerequisites">Setup Requirements</Link>
+              </Button>
+            </div>
           </div>
         </section>
       </main>
-      
+
       <Footer />
     </div>
   );

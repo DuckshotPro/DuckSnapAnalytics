@@ -13,8 +13,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Layout } from "@/components/layout/Layout";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
-import Dashboard from "@/pages/Dashboard";
 import ConnectAccount from "@/pages/ConnectAccount";
+import SnapchatPrerequisites from "@/pages/snapchat-prerequisites";
+import Dashboard from "@/pages/Dashboard";
 import AuthPage from "@/pages/auth-page";
 import PricingPage from "@/pages/pricing-page";
 import SettingsPage from "@/pages/settings-page";
@@ -51,15 +52,16 @@ function Router() {
         <Route path="/contact-page" component={ContactPage} />
         <Route path="/roadmap-page" component={RoadmapPage} />
         <Route path="/help-page" component={HelpPage} />
-        
+
         {/* Protected Routes (require authentication) */}
         <ProtectedRoute path="/dashboard" component={Dashboard} />
-        <ProtectedRoute path="/connect" component={ConnectAccount} />
+        <ProtectedRoute path="/connect-account" component={ConnectAccount} />
+        <ProtectedRoute path="/snapchat-prerequisites" component={SnapchatPrerequisites} />
         <ProtectedRoute path="/settings" component={SettingsPage} />
         <ProtectedRoute path="/reports" component={ReportsPage} />
         <ProtectedRoute path="/data-management" component={React.lazy(() => import("@/pages/data-management"))} />
         <ProtectedRoute path="/admin" component={React.lazy(() => import("@/pages/admin/AdminDashboard"))} />
-        
+
         {/* 404 Not Found Route */}
         <Route component={NotFound} />
       </Switch>

@@ -12,8 +12,10 @@ import { useToast } from "@/hooks/use-toast";
 import { insertSnapchatCredentialsSchema } from "@shared/schema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
 import { ConsentDialog } from "@/components/consent-dialog";
+import { Link } from "wouter";
 
 export default function ConnectAccount() {
   const { connectSnapchatMutation, user } = useAuth();
@@ -41,7 +43,7 @@ export default function ConnectAccount() {
 
   const handleConfirmConsent = async () => {
     if (!pendingCredentials) return;
-    
+
     try {
       // Connect with consent = true
       await connectSnapchatMutation.mutateAsync({
@@ -50,12 +52,12 @@ export default function ConnectAccount() {
         consentDate: new Date().toISOString(),
         privacyPolicyVersion: "1.0" // Current version of our privacy policy
       });
-      
+
       toast({
         title: "Account connected",
         description: "Your Snapchat account has been successfully connected.",
       });
-      
+
       navigate("/dashboard");
     } catch (error) {
       // Error is already handled by the mutation
@@ -98,7 +100,7 @@ export default function ConnectAccount() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
-      
+
       <main className="flex-1 container mx-auto px-4 py-8">
         <Card className="max-w-2xl mx-auto">
           <CardContent className="p-6 md:p-8">
@@ -107,7 +109,7 @@ export default function ConnectAccount() {
               <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">Connect Your Snapchat Account</h2>
               <p className="text-muted-foreground">Enter your Snapchat API credentials to start analyzing your data and unlock powerful insights.</p>
             </div>
-            
+
             <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-md mx-auto space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="snapchatClientId">Client ID</Label>
@@ -121,7 +123,7 @@ export default function ConnectAccount() {
                   <p className="text-sm text-destructive">{form.formState.errors.snapchatClientId.message}</p>
                 )}
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="snapchatApiKey">API Secret Key</Label>
                 <Input 
@@ -135,7 +137,7 @@ export default function ConnectAccount() {
                 )}
                 <p className="text-xs text-muted-foreground mt-1">Your data is securely stored and never shared with third parties.</p>
               </div>
-              
+
               <Button 
                 type="submit" 
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
@@ -143,7 +145,7 @@ export default function ConnectAccount() {
               >
                 {connectSnapchatMutation.isPending ? "Connecting..." : "Connect Account"}
               </Button>
-              
+
               <div className="text-center text-sm text-muted-foreground mt-6 pt-6 border-t border-border">
                 <p>Don't have API credentials? <a href="https://developers.snapchat.com/" className="text-primary font-medium hover:underline" target="_blank" rel="noreferrer">Learn how to get them</a></p>
               </div>
@@ -151,9 +153,9 @@ export default function ConnectAccount() {
           </CardContent>
         </Card>
       </main>
-      
+
       <Footer />
-      
+
       {/* Consent Dialog */}
       <ConsentDialog
         open={showConsentDialog}
