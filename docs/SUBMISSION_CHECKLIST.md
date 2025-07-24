@@ -45,7 +45,7 @@
 
 ### Required Documents
 1. **App Information Form**
-   - Name: DuckShots SnapAlytics
+   - Name: DuckShots Analytics
    - Category: Business & Analytics
    - Age rating: 13+
    - Description: Professional Snapchat analytics platform

@@ -1,5 +1,5 @@
 
-# Privacy Impact Assessment - DuckShots SnapAlytics
+# Privacy Impact Assessment - DuckShots Analytics
 
 ## Data Collection Practices
 
@@ -125,4 +125,4 @@
 - Limited processing scope
 
 ## Conclusion
-DuckShots SnapAlytics implements comprehensive privacy protection measures that exceed regulatory requirements while providing valuable analytics insights to users.
+DuckShots Analytics implements comprehensive privacy protection measures that exceed regulatory requirements while providing valuable analytics insights to users.
