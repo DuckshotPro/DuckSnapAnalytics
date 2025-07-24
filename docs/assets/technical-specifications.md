@@ -1,5 +1,5 @@
 
-# Technical Specifications - DuckShots SnapAlytics
+# Technical Specifications - DuckShots Analytics
 
 ## Architecture Overview
 

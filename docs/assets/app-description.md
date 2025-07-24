@@ -2,7 +2,7 @@
 # DuckShots SnapAlytics - App Store Description
 
 ## App Information
-- **App Name**: DuckShots SnapAlytics
+- **App Name**: DuckShots Analytics
 - **Tagline**: Professional Snapchat Analytics for Content Creators
 - **Category**: Business & Analytics
 - **Age Rating**: 13+ (COPPA Compliant)
@@ -14,7 +14,7 @@ Professional analytics platform for Snapchat creators and businesses
 
 ## App Store Description
 
-Transform your Snapchat strategy with **DuckShots SnapAlytics** – the professional analytics platform that turns your social media data into actionable insights for growth.
+Transform your Snapchat strategy with **DuckShots Analytics** – the professional analytics platform that turns your social media data into actionable insights for growth.
 
 ### 🚀 **Key Features**
 
@@ -90,7 +90,7 @@ Your data security is our top priority. All information is encrypted with indust
 
 Connect your Snapchat account securely and start gaining insights that drive real growth. No complex setup required – professional analytics made simple.
 
-**Download DuckShots SnapAlytics and transform your social media strategy with the power of professional analytics.**
+**Download DuckShots Analytics and transform your social media strategy with the power of professional analytics.**
 
 ---
 
@@ -120,7 +120,7 @@ snapchat analytics, social media analytics, content creator tools, instagram ins
 3. **AI Insights** (10s): Demonstrate AI-powered recommendations
 4. **Reports** (10s): Show report generation and export
 5. **Privacy** (10s): Highlight privacy controls and data security
-6. **Call to Action** (5s): "Download DuckShots SnapAlytics today"
+6. **Call to Action** (5s): "Download DuckShots Analytics today"
 
 ## App Icon Design Brief
 - **Style**: Clean, modern, professional

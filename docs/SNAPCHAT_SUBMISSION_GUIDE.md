@@ -34,7 +34,7 @@ This guide outlines the complete process for submitting DuckShots SnapAlytics to
 ### 📋 Documentation Requirements
 
 #### 1. App Description & Branding
-- **App Name**: DuckShots SnapAlytics
+- **App Name**: DuckShots Analytics
 - **Tagline**: "Professional Snapchat Analytics for Content Creators"
 - **Category**: Analytics & Business Tools
 - **Target Audience**: Content creators, influencers, businesses
