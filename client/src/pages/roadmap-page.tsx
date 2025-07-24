@@ -92,11 +92,11 @@ const features: Feature[] = [
     id: 5,
     title: "Competitor Analysis",
     description: "Compare your performance metrics with similar content creators to identify growth opportunities.",
-    status: "planned",
+    status: "completed",
     category: "Analytics",
     votes: 512,
     comments: 92,
-    estimatedCompletion: "Q4 2025",
+    completedDate: "July 2025",
     isPremium: true
   },
   {

@@ -21,8 +21,12 @@ import {
   users, 
   User 
 } from "@shared/schema";
-import { fetchSnapchatData } from "./services/snapchat";
-import { generateAiInsight } from "./services/gemini";
+// Import required services
+  import { fetchSnapchatData } from "./services/snapchat";
+  import { generateAiInsight } from "./services/gemini";
+  import { generateAutomatedReport } from "./services/automated-reports";
+  import { generateAudienceSegments } from "./services/audience-segmentation";
+  import { generateCompetitorAnalysis } from "./services/competitor-analysis";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { setupOAuth } from "./oauth";
@@ -533,6 +537,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting account:", error);
       res.status(500).json({ message: "Error deleting account" });
+    }
+  });
+
+  // Audience Segmentation routes (premium only)
+  app.get("/api/audience-segments", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as User;
+
+      // Check if user is premium
+      if (user.subscription !== "premium") {
+        return res.status(403).json({ message: "Premium subscription required" });
+      }
+
+      const segments = await generateAudienceSegments(user.id);
+      res.json(segments);
+    } catch (error) {
+      console.error("Error fetching audience segments:", error);
+      res.status(500).json({ message: "Error fetching audience segments" });
+    }
+  });
+
+  app.get("/api/audience-segments/:segmentId/recommendations", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { segmentId } = req.params;
+
+      // Check if user is premium
+      if (user.subscription !== "premium") {
+        return res.status(403).json({ message: "Premium subscription required" });
+      }
+
+      // Get segment data (mock for now)
+      const segment = {
+        id: segmentId,
+        name: "Sample Segment",
+        size: 1000,
+        avgEngagement: 0.075,
+        growthRate: 0.15
+      };
+
+      if (!segment) {
+        return res.status(404).json({ message: "Segment not found" });
+      }
+
+      const recommendations = getSegmentRecommendations(segment);
+
+      res.json({ recommendations });
+    } catch (error) {
+      console.error("Error fetching segment recommendations:", error);
+      res.status(500).json({ message: "Error fetching segment recommendations" });
+    }
+  });
+
+  // Competitor Analysis routes (premium only)
+  app.get("/api/competitor-analysis", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as User;
+
+      // Check if user is premium
+      if (user.subscription !== "premium") {
+        return res.status(403).json({ message: "Premium subscription required" });
+      }
+
+      // For now, return null to prompt generation
+      res.json(null);
+    } catch (error) {
+      console.error("Error fetching competitor analysis:", error);
+      res.status(500).json({ message: "Error fetching competitor analysis" });
+    }
+  });
+
+  app.post("/api/competitor-analysis/generate", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as User;
+
+      // Check if user is premium
+      if (user.subscription !== "premium") {
+        return res.status(403).json({ message: "Premium subscription required" });
+      }
+
+      const analysis = await generateCompetitorAnalysis(user.id);
+      res.json(analysis);
+    } catch (error) {
+      console.error("Error generating competitor analysis:", error);
+      res.status(500).json({ message: "Error generating competitor analysis" });
     }
   });
 

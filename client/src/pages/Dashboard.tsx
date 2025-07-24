@@ -9,6 +9,7 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { PremiumFeature } from "@/components/dashboard/PremiumFeature";
 import { AdSection } from "@/components/dashboard/AdSection";
 import { UpgradePrompt } from "@/components/dashboard/UpgradePrompt";
+import { CompetitorAnalysis } from "@/components/dashboard/CompetitorAnalysis";
 import { useAuth } from "@/hooks/use-auth";
 import { useSnapchatData } from "@/hooks/use-snapchat-data";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -171,9 +172,14 @@ export default function Dashboard() {
           <ContentTable items={contentItems} />
         )}
         
-        {/* Premium Features & Ad Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Premium Features & Analytics */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <PremiumFeature />
+          <CompetitorAnalysis />
+        </div>
+        
+        {/* Ad Section */}
+        <div className="mb-6">
           <AdSection />
         </div>
         
