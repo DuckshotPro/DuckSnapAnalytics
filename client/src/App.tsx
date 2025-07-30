@@ -56,6 +56,7 @@ function Router() {
         {/* Protected Routes (require authentication) */}
         <ProtectedRoute path="/dashboard" component={Dashboard} />
         <ProtectedRoute path="/connect-account" component={ConnectAccount} />
+        <ProtectedRoute path="/connect" component={ConnectAccount} />
         <ProtectedRoute path="/snapchat-prerequisites" component={SnapchatPrerequisites} />
         <ProtectedRoute path="/settings" component={SettingsPage} />
         <ProtectedRoute path="/reports" component={ReportsPage} />
