@@ -25,10 +25,18 @@ import { db } from "./db";
  */
 export function setupOAuth(app: Express) {
   // Check if required environment variables are set
+  console.log("OAuth Setup - Checking environment variables:");
+  console.log("SNAPCHAT_CLIENT_ID:", process.env.SNAPCHAT_CLIENT_ID ? "SET" : "NOT SET");
+  console.log("SNAPCHAT_CLIENT_SECRET:", process.env.SNAPCHAT_CLIENT_SECRET ? "SET" : "NOT SET");
+  console.log("providers.snapchat.clientID:", providers.snapchat.clientID ? "SET" : "NOT SET");
+  console.log("providers.snapchat.clientSecret:", providers.snapchat.clientSecret ? "SET" : "NOT SET");
+  
   if (!providers.snapchat.clientID || !providers.snapchat.clientSecret) {
     console.warn("Snapchat OAuth is not configured. Set SNAPCHAT_CLIENT_ID and SNAPCHAT_CLIENT_SECRET environment variables.");
     return;
   }
+  
+  console.log("✅ OAuth configuration successful - registering routes");
 
   /**
    * Snapchat OAuth Strategy
