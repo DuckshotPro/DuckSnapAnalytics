@@ -18,22 +18,60 @@ import { generateWeeklyReports } from './automated-reports';
 import { User } from '@shared/schema';
 
 // Redis connection for queue management - fallback to in-memory for development
-let redis: Redis;
-try {
-  redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
-} catch (error) {
-  console.log('Redis not available, using in-memory fallback for development');
-  // In development, we'll use a memory store instead of Redis
-  redis = null as any;
+let redis: Redis | null = null;
+let useRedis = false;
+
+// Initialize Redis connection asynchronously
+async function initializeRedis() {
+  try {
+    redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+      maxRetriesPerRequest: 1,
+      lazyConnect: true,
+      enableOfflineQueue: false,
+    });
+    
+    // Test the connection with timeout
+    await Promise.race([
+      redis.ping(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Redis connection timeout')), 2000))
+    ]);
+    
+    useRedis = true;
+    console.log('✅ Redis connected successfully');
+    return true;
+  } catch (error) {
+    console.log('📝 Redis not available, using in-memory fallback for development');
+    if (redis) {
+      redis.disconnect();
+    }
+    redis = null;
+    useRedis = false;
+    return false;
+  }
 }
 
-// Job queues - fallback to memory store for development
-export const dataFetchQueue = redis ? new Bull('data-fetch', { redis: { host: 'localhost', port: 6379 } }) : new DevelopmentQueue('data-fetch');
-export const reportGenerationQueue = redis ? new Bull('report-generation', { redis: { host: 'localhost', port: 6379 } }) : new DevelopmentQueue('report-generation');
-export const dataCleanupQueue = redis ? new Bull('data-cleanup', { redis: { host: 'localhost', port: 6379 } }) : new DevelopmentQueue('data-cleanup');
+// Job queues - will be initialized after Redis connection attempt
+export let dataFetchQueue: Bull.Queue | DevelopmentQueue;
+export let reportGenerationQueue: Bull.Queue | DevelopmentQueue;
+export let dataCleanupQueue: Bull.Queue | DevelopmentQueue;
+
+// Initialize queues
+async function initializeQueues() {
+  const redisAvailable = await initializeRedis();
+  
+  if (redisAvailable && redis) {
+    dataFetchQueue = new Bull('data-fetch', { redis: { host: 'localhost', port: 6379 } });
+    reportGenerationQueue = new Bull('report-generation', { redis: { host: 'localhost', port: 6379 } });
+    dataCleanupQueue = new Bull('data-cleanup', { redis: { host: 'localhost', port: 6379 } });
+  } else {
+    dataFetchQueue = new DevelopmentQueue('data-fetch');
+    reportGenerationQueue = new DevelopmentQueue('report-generation');
+    dataCleanupQueue = new DevelopmentQueue('data-cleanup');
+  }
+}
 
 export interface JobScheduler {
-  start(): void;
+  start(): Promise<void>;
   stop(): void;
   addUser(userId: number): Promise<void>;
   removeUser(userId: number): Promise<void>;
@@ -43,34 +81,37 @@ class SnapchatETLScheduler implements JobScheduler {
   private tasks: cron.ScheduledTask[] = [];
   private isRunning = false;
 
-  start(): void {
+  async start(): Promise<void> {
     if (this.isRunning) return;
     
     console.log('🚀 Starting ETL Pipeline and Job Scheduler...');
     
+    // Initialize queues first
+    await initializeQueues();
+    
     // 1. Data fetch jobs - every 15 minutes for premium, 24 hours for free
     const premiumDataFetch = cron.schedule('*/15 * * * *', async () => {
       await this.schedulePremiumDataFetch();
-    }, { scheduled: false });
+    });
 
     const freeDataFetch = cron.schedule('0 0 * * *', async () => {
       await this.scheduleFreeDataFetch();
-    }, { scheduled: false });
+    });
 
     // 2. Weekly report generation - Sundays at 9 AM
     const weeklyReports = cron.schedule('0 9 * * 0', async () => {
       await this.scheduleWeeklyReports();
-    }, { scheduled: false });
+    });
 
     // 3. Data retention cleanup - Daily at 2 AM
     const dataCleanup = cron.schedule('0 2 * * *', async () => {
       await this.scheduleDataCleanup();
-    }, { scheduled: false });
+    });
 
     // 4. Queue processing recovery - every 5 minutes
     const queueRecovery = cron.schedule('*/5 * * * *', async () => {
       await this.processFailedJobs();
-    }, { scheduled: false });
+    });
 
     // Start all tasks
     premiumDataFetch.start();
@@ -195,8 +236,15 @@ class SnapchatETLScheduler implements JobScheduler {
         const failedJobs = await queue.getFailed();
         for (const job of failedJobs) {
           if (job.attemptsMade < 3) {
-            await job.retry();
-            console.log(`🔄 Retrying failed job ${job.id}`);
+            // Check if this is a Bull queue (has retry method) or DevelopmentQueue
+            if ('retry' in job) {
+              await (job as any).retry();
+              console.log(`🔄 Retrying failed job ${job.id}`);
+            } else {
+              // For development queue, just change status back to waiting
+              (job as any).status = 'waiting';
+              console.log(`🔄 Retrying failed job ${job.id} (development mode)`);
+            }
           }
         }
       }

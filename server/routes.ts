@@ -658,7 +658,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(statusCode).json(health);
     } catch (error) {
-      logger.error("Health check failed:", error);
+      logger.error("Health check failed:", error as any);
       res.status(503).json({
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
@@ -684,7 +684,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(detailedHealth);
     } catch (error) {
-      logger.error("Detailed health check failed:", error);
+      logger.error("Detailed health check failed:", error as any);
       res.status(503).json({
         status: 'unhealthy',
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -708,7 +708,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ message: 'Test alert sent successfully' });
     } catch (error) {
-      logger.error("Failed to send test alert:", error);
+      logger.error("Failed to send test alert:", error as any);
       res.status(500).json({ error: 'Failed to send test alert' });
     }
   });

@@ -102,7 +102,7 @@ export interface IStorage {
    * @param userId - The user's ID
    * @returns Latest Snapchat data record
    */
-  getLatestSnapchatData(userId: number): Promise<SnapchatData | undefined>;
+  getSnapchatData(userId: number): Promise<SnapchatData | undefined>;
   
   /**
    * Saves Snapchat data for a user
@@ -111,13 +111,6 @@ export interface IStorage {
    * @returns The saved data record
    */
   saveSnapchatData(userId: number, data: any): Promise<SnapchatData>;
-  
-  /**
-   * Gets the most recent Snapchat data for a user
-   * @param userId - The user's ID
-   * @returns The latest Snapchat data or undefined if none exists
-   */
-  getLatestSnapchatData(userId: number): Promise<SnapchatData | undefined>;
   
   /**
    * Saves an AI-generated insight for a user
@@ -353,7 +346,7 @@ export class DatabaseStorage implements IStorage {
    * @param userId - The user's ID
    * @returns The latest Snapchat data or undefined if none exists
    */
-  async getLatestSnapchatData(userId: number): Promise<SnapchatData | undefined> {
+  async getSnapchatData(userId: number): Promise<SnapchatData | undefined> {
     const [latestData] = await db.select()
       .from(snapchatData)
       .where(eq(snapchatData.userId, userId))
