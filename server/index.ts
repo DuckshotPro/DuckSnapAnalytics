@@ -56,7 +56,7 @@ logger.info("Application starting up", {
    */
   try {
     const { jobScheduler } = await import('./services/job-scheduler');
-    jobScheduler.start();
+    await jobScheduler.start();
     
     // Graceful shutdown handling
     const shutdown = () => {
@@ -71,7 +71,7 @@ logger.info("Application starting up", {
     process.on('SIGTERM', shutdown);
     process.on('SIGINT', shutdown);
   } catch (error) {
-    logger.error('Failed to start job scheduler:', error);
+    logger.error('Failed to start job scheduler:', error as any);
   }
 
   /**
