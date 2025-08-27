@@ -1,0 +1,16 @@
+[2025-08-27 21:07:26.273] [INFO] Application starting up {"environment":"development","nodeVersion":"v22.16.0"}
+OAuth Setup - Checking environment variables:
+SNAPCHAT_CLIENT_ID: SET
+SNAPCHAT_CLIENT_SECRET: SET
+providers.snapchat.clientID: SET
+providers.snapchat.clientSecret: SET
+✅ OAuth configuration successful - registering routes
+🚀 Starting ETL Pipeline and Job Scheduler...
+📝 Redis not available, using in-memory fallback for development
+🔧 Registered processor for fetch-user-data in data-fetch
+🔧 Registered processor for weekly-reports in report-generation
+🔧 Registered processor for cleanup-old-data in data-cleanup
+✅ ETL Pipeline and Job Scheduler started successfully
+[2025-08-27 21:07:26.352] [INFO] Server started successfully {"port":5000,"host":"0.0.0.0"}
+9:07:26 PM [express] serving on port 5000
+[2025-08-27 21:07:33.437] [ERROR] HTTP 503 {"method":"GET","url":"/api/health","ip":"127.0.0.1","statusCode":503,"userAgent":"curl/8.12.1","duration":"35ms"}
