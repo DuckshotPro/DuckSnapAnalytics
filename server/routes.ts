@@ -15,6 +15,7 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { z } from "zod";
 import { OrchestratorAgent } from "./agents/orchestrator-agent";
+import http from "http";
 import { 
   insertUserSchema, 
   insertSnapchatCredentialsSchema, 
@@ -259,10 +260,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/snapchat/refresh", isAuthenticated, async (req, res) => {
     try {
       const user = req.user as User;
-      await agentJobQueue.add('run-agent-workflow', { userId: user.id });
-      res.json({ message: "Data refresh and analysis has been queued." });
+      const options = {
+        hostname: "localhost",
+        port: 5001,
+        path: "/run-agent-workflow",
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      };
+
+      const apiReq = http.request(options, (apiRes) => {
+        let data = "";
+        apiRes.on("data", (chunk) => {
+          data += chunk;
+        });
+        apiRes.on("end", () => {
+          res.json(JSON.parse(data));
+        });
+      });
+
+      apiReq.on("error", (error) => {
+        res.status(500).json({ message: "Error calling Python API" });
+      });
+
+      apiReq.write(JSON.stringify({ userId: user.id }));
+      apiReq.end();
     } catch (error) {
-      res.status(500).json({ message: "Error queuing data refresh and analysis" });
+      res.status(500).json({ message: "Error refreshing and analyzing data" });
     }
   });
 
@@ -342,11 +367,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Premium subscription required" });
       }
 
-      await agentJobQueue.add('run-agent-workflow', { userId: user.id });
+      const options = {
+        hostname: "localhost",
+        port: 5001,
+        path: "/run-agent-workflow",
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      };
 
-      res.json({ message: "Insight generation has been queued." });
+      const apiReq = http.request(options, (apiRes) => {
+        let data = "";
+        apiRes.on("data", (chunk) => {
+          data += chunk;
+        });
+        apiRes.on("end", () => {
+          res.json(JSON.parse(data));
+        });
+      });
+
+      apiReq.on("error", (error) => {
+        res.status(500).json({ message: "Error calling Python API" });
+      });
+
+      apiReq.write(JSON.stringify({ userId: user.id }));
+      apiReq.end();
     } catch (error) {
-      res.status(500).json({ message: "Error queuing insight generation" });
+      res.status(500).json({ message: "Error generating AI insight" });
     }
   });
 

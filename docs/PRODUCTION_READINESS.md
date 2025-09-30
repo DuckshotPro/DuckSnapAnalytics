@@ -173,6 +173,23 @@ npm run db:push
 curl http://your-domain.com/api/health
 ```
 
+## New Architecture
+
+The application has been refactored into a two-service architecture:
+
+*   **TypeScript Application**: The main application is written in TypeScript and runs on Node.js. It provides the frontend and the main API.
+*   **Python Agent Service**: The agent-based system is written in Python and runs as a separate service. It exposes a REST API for running the agent workflow.
+
+This new architecture is more robust and scalable, and it allows us to use the official Python ADK.
+
+### Deployment
+
+To deploy the new architecture, you will need to:
+
+1.  **Deploy the TypeScript application**: Build and deploy the TypeScript application as a Node.js service.
+2.  **Deploy the Python agent service**: Build and deploy the Python agent service as a separate container.
+3.  **Configure the communication**: Configure the TypeScript application to communicate with the Python agent service via its REST API.
+
 ## Support and Monitoring
 
 The application now includes comprehensive monitoring and alerting systems suitable for production deployment and Snapchat application review. All ETL processes, health checks, and error handling are enterprise-ready.
