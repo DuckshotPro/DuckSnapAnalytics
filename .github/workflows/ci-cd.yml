@@ -1,0 +1,47 @@
+name: CI/CD Pipeline for Duckshotanalytics.com-DuckSnapAnalytics
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Configure SSH for DP1 Deployment
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.DP1_SSH_PRIVATE_KEY }}
+
+    - name: Add DP1 to known_hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H 74.208.227.161 >> ~/.ssh/known_hosts
+        chmod 600 ~/.ssh/known_hosts
+
+    - name: Build and Deploy Application on DP1
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "Building and deploying Duckshotanalytics.com-DuckSnapAnalytics on DP1..."
+        ssh cira@74.208.227.161 "cd /home/cira/Duckshotanalytics.com-DuckSnapAnalytics && \
+          podman build -t ducksapanalytics:latest -f Dockerfile . && \
+          podman stop ducksapanalytics || true && \
+          podman rm ducksapanalytics || true && \
+          podman run -d --name ducksapanalytics -p 80:3000 ducksapanalytics:latest"
