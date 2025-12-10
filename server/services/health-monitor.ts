@@ -71,11 +71,11 @@ export class HealthMonitor {
       jobHealth,
       metrics
     ] = await Promise.all([
-      this.checkDatabase(),
-      this.checkETLPipeline(),
-      this.checkJobQueues(),
-      this.checkBackgroundJobs(),
-      this.getSystemMetrics()
+      this.checkDatabase().catch(e => { logger.error("Health check - checkDatabase failed:", e); return { status: 'down', lastCheck: new Date().toISOString(), error: e.message }; }),
+      this.checkETLPipeline().catch(e => { logger.error("Health check - checkETLPipeline failed:", e); return { status: 'down', lastCheck: new Date().toISOString(), error: e.message }; }),
+      this.checkJobQueues().catch(e => { logger.error("Health check - checkJobQueues failed:", e); return { status: 'down', lastCheck: new Date().toISOString(), error: e.message }; }),
+      this.checkBackgroundJobs().catch(e => { logger.error("Health check - checkBackgroundJobs failed:", e); return { status: 'down', lastCheck: new Date().toISOString(), error: e.message }; }),
+      this.getSystemMetrics().catch(e => { logger.error("Health check - getSystemMetrics failed:", e); return { totalUsers: 0, activeJobs: 0, failedJobs: 0, lastDataSync: null, error: e.message }; })
     ]);
 
     // Determine overall status

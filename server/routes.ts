@@ -23,6 +23,7 @@ import {
   User
 } from "@shared/schema";
 // Import required services
+<<<<<<< HEAD
 import { fetchSnapchatData } from "./services/snapchat";
 import { generateAiInsight } from "./services/gemini";
 import { generateAutomatedReport } from "./services/automated-reports";
@@ -30,10 +31,17 @@ import { generateAudienceSegments } from "./services/audience-segmentation";
 import { generateCompetitorAnalysis } from "./services/competitor-analysis";
 import paypalService from "./services/paypal";
 import { agentJobQueue } from "./services/job-scheduler";
+=======
+  import { fetchSnapchatData } from "./services/snapchat";
+  import { generateAiInsight } from "./services/gemini";
+  import { generateAutomatedReport } from "./services/automated-reports";
+  import { generateAudienceSegments } from "./services/audience-segmentation";
+  import { generateCompetitorAnalysis } from "./services/competitor-analysis";
+import { pushToAgentWorker } from "./services/job-scheduler";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { setupOAuth } from "./oauth";
-import { healthMonitor } from './services/health-monitor';
+import { HealthMonitor, healthMonitor } from './services/health-monitor';
 import { productionAlerts } from './services/production-alerts';
 import logger from "./logger";
 
@@ -260,7 +268,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/snapchat/refresh", isAuthenticated, async (req, res) => {
     try {
       const user = req.user as User;
-      await agentJobQueue.add('run-agent-workflow', { userId: user.id });
+      await pushToAgentWorker('run-agent-workflow', { userId: user.id });
       res.json({ message: "Data refresh and analysis has been queued." });
     } catch (error) {
       res.status(500).json({ message: "Error queuing data refresh and analysis" });
@@ -363,7 +371,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Premium subscription required" });
       }
 
-      await agentJobQueue.add('run-agent-workflow', { userId: user.id });
+      await pushToAgentWorker('run-agent-workflow', { userId: user.id });
 
       res.json({ message: "Insight generation has been queued." });
     } catch (error) {
