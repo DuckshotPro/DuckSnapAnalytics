@@ -8,13 +8,13 @@ import { Switch } from "@/components/ui/switch";
 import { AdSection } from "@/components/dashboard/AdSection";
 import { toast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Check, 
-  X, 
-  CreditCard, 
-  Zap, 
-  Star, 
-  Download, 
+import {
+  Check,
+  X,
+  CreditCard,
+  Zap,
+  Star,
+  Download,
   Clock,
   Shield,
   Lock,
@@ -30,6 +30,7 @@ import {
   Loader2
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import PayPalSubscriptionButton from "@/components/payments/PayPalSubscriptionButton";
 
 export default function PricingPage() {
   const { user } = useAuth();
@@ -61,7 +62,7 @@ export default function PricingPage() {
 
   const handleCancel = async () => {
     if (!isPremium) return;
-    
+
     if (window.confirm("Are you sure you want to cancel your premium subscription? You'll lose access to premium features at the end of your billing period.")) {
       try {
         await cancelSubscriptionMutation.mutateAsync();
@@ -176,14 +177,14 @@ export default function PricingPage() {
         <p className="text-xl text-muted-foreground mb-8">
           Get the insights you need to grow your Snapchat presence
         </p>
-        
+
         <div className="flex items-center justify-center mb-8">
           <div className="flex items-center space-x-2">
             <span className={billingPeriod === "monthly" ? "font-medium" : "text-muted-foreground"}>
               Monthly
             </span>
-            <Switch 
-              checked={billingPeriod === "yearly"} 
+            <Switch
+              checked={billingPeriod === "yearly"}
               onCheckedChange={(checked) => setBillingPeriod(checked ? "yearly" : "monthly")}
             />
             <span className={billingPeriod === "yearly" ? "font-medium" : "text-muted-foreground"}>
@@ -196,7 +197,7 @@ export default function PricingPage() {
             )}
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {/* Free Plan */}
           <Card className="flex flex-col h-full border-2">
@@ -235,7 +236,7 @@ export default function PricingPage() {
                   <span>Ad-supported experience</span>
                 </div>
               </div>
-              
+
               <div className="border-t pt-4 mt-4">
                 <h4 className="font-medium mb-2">Limitations:</h4>
                 <div className="space-y-2">
@@ -281,7 +282,7 @@ export default function PricingPage() {
               )}
             </CardFooter>
           </Card>
-          
+
           {/* Premium Plan */}
           <Card className="flex flex-col h-full border-2 border-amber-200 bg-gradient-to-b from-amber-50 to-white relative overflow-hidden">
             <div className="absolute top-0 right-0">
@@ -363,20 +364,35 @@ export default function PricingPage() {
                     Current Plan
                   </Button>
                 ) : (
-                  <Button 
-                    onClick={handleUpgrade}
-                    disabled={upgradeMutation.isPending}
-                    className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white"
-                  >
-                    {upgradeMutation.isPending && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    Upgrade to Premium
-                  </Button>
+                  <PayPalSubscriptionButton
+                    planId={billingPeriod === "monthly"
+                      ? import.meta.env.VITE_PAYPAL_MONTHLY_PLAN_ID || ""
+                      : import.meta.env.VITE_PAYPAL_YEARLY_PLAN_ID || ""}
+                    billingPeriod={billingPeriod}
+                    amount={billingPeriod === "monthly" ? "19.99" : "191.90"}
+                    buttonText={billingPeriod === "yearly" ? "Upgrade to Premium (Save 20%)" : "Upgrade to Premium"}
+                    variant="premium"
+                    onSuccess={(subscriptionId) => {
+                      console.log('Subscription created:', subscriptionId);
+                      toast({
+                        title: "Subscription Activated! 🎉",
+                        description: "Welcome to DuckShot Analytics Premium!",
+                      });
+                      navigate("/dashboard");
+                    }}
+                    onError={(error) => {
+                      console.error('PayPal error:', error);
+                      toast({
+                        title: "Payment Failed",
+                        description: "There was an error processing your payment. Please try again.",
+                        variant: "destructive",
+                      });
+                    }}
+                  />
                 )
               ) : (
                 <Link href="/auth" className="w-full">
-                  <Button 
+                  <Button
                     className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white"
                   >
                     <Zap className="mr-2 h-4 w-4" /> Get Premium
@@ -437,7 +453,7 @@ export default function PricingPage() {
         <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
           Unlock the full potential of your Snapchat analytics with these premium features
         </p>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="p-6 border rounded-lg bg-white">
             <div className="h-12 w-12 bg-amber-100 rounded-lg flex items-center justify-center mb-4">
@@ -448,7 +464,7 @@ export default function PricingPage() {
               Get personalized recommendations and insights powered by advanced AI algorithms to optimize your content strategy.
             </p>
           </div>
-          
+
           <div className="p-6 border rounded-lg bg-white">
             <div className="h-12 w-12 bg-amber-100 rounded-lg flex items-center justify-center mb-4">
               <BarChart3 className="h-6 w-6 text-amber-600" />
@@ -458,7 +474,7 @@ export default function PricingPage() {
               Access comprehensive metrics, historical data, and in-depth audience segmentation to better understand your performance.
             </p>
           </div>
-          
+
           <div className="p-6 border rounded-lg bg-white">
             <div className="h-12 w-12 bg-amber-100 rounded-lg flex items-center justify-center mb-4">
               <FileText className="h-6 w-6 text-amber-600" />
@@ -468,7 +484,7 @@ export default function PricingPage() {
               Generate and export beautiful, detailed reports in multiple formats to share with your team or clients.
             </p>
           </div>
-          
+
           <div className="p-6 border rounded-lg bg-white">
             <div className="h-12 w-12 bg-amber-100 rounded-lg flex items-center justify-center mb-4">
               <Users className="h-6 w-6 text-amber-600" />
@@ -478,7 +494,7 @@ export default function PricingPage() {
               Benchmark your performance against competitors and identify opportunities to stand out in your niche.
             </p>
           </div>
-          
+
           <div className="p-6 border rounded-lg bg-white">
             <div className="h-12 w-12 bg-amber-100 rounded-lg flex items-center justify-center mb-4">
               <LineChart className="h-6 w-6 text-amber-600" />
@@ -488,7 +504,7 @@ export default function PricingPage() {
               See where your account is headed with AI-powered growth forecasts and trend predictions.
             </p>
           </div>
-          
+
           <div className="p-6 border rounded-lg bg-white">
             <div className="h-12 w-12 bg-amber-100 rounded-lg flex items-center justify-center mb-4">
               <HeartHandshake className="h-6 w-6 text-amber-600" />
@@ -503,7 +519,7 @@ export default function PricingPage() {
 
       <div className="mt-16 max-w-3xl mx-auto text-center">
         <h2 className="text-2xl font-bold mb-4">Frequently Asked Questions</h2>
-        
+
         <Accordion type="single" collapsible className="w-full text-left">
           <AccordionItem value="item-1">
             <AccordionTrigger>Can I cancel my premium subscription at any time?</AccordionTrigger>
@@ -556,7 +572,7 @@ export default function PricingPage() {
                 </Link>
               </div>
             ) : (
-              <Button 
+              <Button
                 onClick={handleUpgrade}
                 disabled={upgradeMutation.isPending}
                 size="lg"
@@ -570,7 +586,7 @@ export default function PricingPage() {
             )
           ) : (
             <Link href="/auth">
-              <Button 
+              <Button
                 size="lg"
                 className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white cursor-pointer"
               >
@@ -589,7 +605,7 @@ export default function PricingPage() {
               <p className="font-medium">You're currently on the Free plan</p>
               <p className="text-sm text-muted-foreground">Upgrade to unlock premium features and AI insights</p>
             </div>
-            <Button 
+            <Button
               onClick={handleUpgrade}
               disabled={upgradeMutation.isPending}
               className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white"
@@ -602,7 +618,7 @@ export default function PricingPage() {
           </div>
         </div>
       )}
-      
+
       {/* Ad Section for Free Users */}
       {user && !isPremium && (
         <div className="mt-16 max-w-5xl mx-auto">
@@ -614,7 +630,7 @@ export default function PricingPage() {
 }
 
 // Import missing components
-import { 
+import {
   Accordion,
   AccordionContent,
   AccordionItem,

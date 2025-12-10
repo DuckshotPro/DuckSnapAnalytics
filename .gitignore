@@ -9,3 +9,8 @@ vite.config.ts.*
 
 # GitHub App credentials
 gha-creds-*.json
+
+# Environment variables (contains sensitive credentials)
+.env
+.env.local
+.env.*.local

@@ -15,19 +15,20 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { z } from "zod";
 import { OrchestratorAgent } from "./agents/orchestrator-agent";
-import { 
-  insertUserSchema, 
-  insertSnapchatCredentialsSchema, 
+import {
+  insertUserSchema,
+  insertSnapchatCredentialsSchema,
   userDataPreferencesSchema,
-  users, 
-  User 
+  users,
+  User
 } from "@shared/schema";
 // Import required services
-  import { fetchSnapchatData } from "./services/snapchat";
-  import { generateAiInsight } from "./services/gemini";
-  import { generateAutomatedReport } from "./services/automated-reports";
-  import { generateAudienceSegments } from "./services/audience-segmentation";
-  import { generateCompetitorAnalysis } from "./services/competitor-analysis";
+import { fetchSnapchatData } from "./services/snapchat";
+import { generateAiInsight } from "./services/gemini";
+import { generateAutomatedReport } from "./services/automated-reports";
+import { generateAudienceSegments } from "./services/audience-segmentation";
+import { generateCompetitorAnalysis } from "./services/competitor-analysis";
+import paypalService from "./services/paypal";
 import { agentJobQueue } from "./services/job-scheduler";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -116,8 +117,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         insertUserSchema.parse(req.body);
       } catch (error) {
         if (error instanceof z.ZodError) {
-          return res.status(400).json({ 
-            message: `Validation error: ${error.errors.map(e => e.message).join(', ')}` 
+          return res.status(400).json({
+            message: `Validation error: ${error.errors.map(e => e.message).join(', ')}`
           });
         }
         return res.status(400).json({ message: "Invalid request data" });
@@ -187,8 +188,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         insertSnapchatCredentialsSchema.parse(req.body);
       } catch (error) {
         if (error instanceof z.ZodError) {
-          return res.status(400).json({ 
-            message: `Validation error: ${error.errors.map(e => e.message).join(', ')}` 
+          return res.status(400).json({
+            message: `Validation error: ${error.errors.map(e => e.message).join(', ')}`
           });
         }
         return res.status(400).json({ message: "Invalid request data" });
@@ -205,8 +206,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update user with API credentials and consent data
       await storage.updateUserSnapchatCredentials(
-        user.id, 
-        req.body.snapchatClientId, 
+        user.id,
+        req.body.snapchatClientId,
         req.body.snapchatApiKey,
         consentData
       );
@@ -231,9 +232,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Still connect even if initial data fetch fails
       }
 
-      res.json({ 
-        message: "Snapchat account connected successfully", 
-        dataConsent: consentData.dataConsent 
+      res.json({
+        message: "Snapchat account connected successfully",
+        dataConsent: consentData.dataConsent
       });
     } catch (error) {
       console.error("Error connecting Snapchat account:", error);
@@ -283,20 +284,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/subscription/upgrade", isAuthenticated, async (req, res) => {
     try {
       const user = req.user as User;
-      const { plan } = req.body;
+      const { plan, billingPeriod } = req.body;
 
       if (plan !== "premium") {
         return res.status(400).json({ message: "Invalid subscription plan" });
       }
 
-      // Set expiration to 30 days from now
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 30);
+      // Determine PayPal plan ID based on billing period
+      const planId = billingPeriod === "yearly"
+        ? process.env.PAYPAL_YEARLY_PLAN_ID
+        : process.env.PAYPAL_MONTHLY_PLAN_ID;
 
-      await storage.updateUserSubscription(user.id, "premium", expiresAt);
+      if (!planId) {
+        // Fallback to direct upgrade if PayPal not configured
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 30);
+        await storage.updateUserSubscription(user.id, "premium", expiresAt);
+        return res.json({ message: "Subscription upgraded successfully" });
+      }
 
-      res.json({ message: "Subscription upgraded successfully" });
+      // Create PayPal subscription
+      const subscription = await paypalService.createSubscription(
+        planId,
+        user,
+        `${process.env.APP_URL}/subscription/success`,
+        `${process.env.APP_URL}/pricing`
+      );
+
+      res.json({
+        message: "Redirect to PayPal for payment",
+        approvalUrl: subscription.approvalUrl,
+        subscriptionId: subscription.subscriptionId
+      });
     } catch (error) {
+      console.error("Error upgrading subscription:", error);
       res.status(500).json({ message: "Error upgrading subscription" });
     }
   });
@@ -382,7 +403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req
       );
 
-      res.json({ 
+      res.json({
         message: "Data preferences updated successfully",
         preferences: validatedPrefs
       });
@@ -430,7 +451,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req
       );
 
-      res.json({ 
+      res.json({
         message: `Consent preferences ${consent ? "accepted" : "declined"} successfully`,
         consentStatus: consent
       });
@@ -542,7 +563,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!snapchatData) {
         return res.status(404).json({ message: "No Snapchat data found. Please sync your account first." });
       }
-      
+
       const segments = generateAudienceSegments(snapchatData);
       res.json(segments);
     } catch (error) {
@@ -637,8 +658,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const health = await healthMonitor.getHealthStatus();
 
       // Return appropriate HTTP status based on health
-      const statusCode = health.status === 'healthy' ? 200 : 
-                        health.status === 'degraded' ? 200 : 503;
+      const statusCode = health.status === 'healthy' ? 200 :
+        health.status === 'degraded' ? 200 : 503;
 
       res.status(statusCode).json(health);
     } catch (error) {
