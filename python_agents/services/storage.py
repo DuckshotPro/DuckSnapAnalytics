@@ -1,14 +1,15 @@
 """
 Storage Service
 
-This module provides a storage interface for database operations.
-In a production environment, this would interface with your actual database.
+This module provides a storage interface for database operations using PostgreSQL.
 """
 
+import os
+import json
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from typing import Optional, Dict, Any
 from dataclasses import dataclass
-import json
-
 
 @dataclass
 class User:
@@ -18,99 +19,76 @@ class User:
     snapchat_client_id: Optional[str] = None
     snapchat_api_key: Optional[str] = None
 
-
 class StorageService:
     """
-    Storage service for managing user data and analytics.
-    This is a mock implementation - replace with actual database calls.
+    Storage service for managing user data and analytics via PostgreSQL.
     """
     
     def __init__(self):
-        # Mock storage - replace with actual database
-        self._users: Dict[int, User] = {}
-        self._snapchat_data: Dict[int, Any] = {}
-        self._ai_insights: Dict[int, str] = {}
-    
+        self.db_url = os.environ.get("DATABASE_URL")
+        if not self.db_url:
+            print("⚠️ DATABASE_URL environment variable is not set. StorageService will fail.")
+
+    def _get_connection(self):
+        return psycopg2.connect(self.db_url, cursor_factory=RealDictCursor)
+
     async def get_user(self, user_id: int) -> Optional[User]:
         """
         Get user by ID
-        
-        Args:
-            user_id: The user's unique ID
-        
-        Returns:
-            User object or None if not found
         """
-        # In production, this would query the database
-        return self._users.get(user_id)
-    
-    async def get_user_by_username(self, username: str) -> Optional[User]:
-        """
-        Get user by username
-        
-        Args:
-            username: The user's username
-        
-        Returns:
-            User object or None if not found
-        """
-        for user in self._users.values():
-            if user.username == username:
-                return user
-        return None
-    
+        try:
+            with self._get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT id, username, snapchat_client_id, snapchat_api_key FROM users WHERE id = %s",
+                        (user_id,)
+                    )
+                    row = cur.fetchone()
+                    if row:
+                        return User(
+                            id=row['id'],
+                            username=row['username'],
+                            snapchat_client_id=row.get('snapchat_client_id'),
+                            snapchat_api_key=row.get('snapchat_api_key')
+                        )
+            return None
+        except Exception as e:
+            print(f"❌ Database Error (get_user): {e}")
+            return None
+
     async def save_snapchat_data(self, user_id: int, data: Dict[str, Any]) -> bool:
         """
         Save Snapchat data for a user
-        
-        Args:
-            user_id: The user's ID
-            data: Snapchat data dictionary
-        
-        Returns:
-            True if successful
         """
-        self._snapchat_data[user_id] = data
-        return True
-    
+        try:
+            with self._get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "INSERT INTO snapchat_data (user_id, data, fetched_at) VALUES (%s, %s, NOW())",
+                        (user_id, json.dumps(data))
+                    )
+                conn.commit()
+            return True
+        except Exception as e:
+            print(f"❌ Database Error (save_snapchat_data): {e}")
+            return False
+
     async def save_ai_insight(self, user_id: int, insight: str) -> bool:
         """
         Save AI-generated insight for a user
-        
-        Args:
-            user_id: The user's ID
-            insight: The insight text
-        
-        Returns:
-            True if successful
         """
-        self._ai_insights[user_id] = insight
-        return True
-    
-    async def get_snapchat_data(self, user_id: int) -> Optional[Dict[str, Any]]:
-        """
-        Get Snapchat data for a user
-        
-        Args:
-            user_id: The user's ID
-        
-        Returns:
-            Snapchat data or None if not found
-        """
-        return self._snapchat_data.get(user_id)
-    
-    async def get_ai_insight(self, user_id: int) -> Optional[str]:
-        """
-        Get AI insight for a user
-        
-        Args:
-            user_id: The user's ID
-        
-        Returns:
-            Insight text or None if not found
-        """
-        return self._ai_insights.get(user_id)
-
+        try:
+            with self._get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "INSERT INTO ai_insights (user_id, insight, created_at) VALUES (%s, %s, NOW())",
+                        (user_id, insight)
+                    )
+                conn.commit()
+            return True
+        except Exception as e:
+            print(f"❌ Database Error (save_ai_insight): {e}")
+            return False
 
 # Global storage service instance
 storage = StorageService()

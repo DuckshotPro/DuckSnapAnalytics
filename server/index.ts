@@ -9,6 +9,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import logger, { requestLogger } from "./logger";
+import path from "path";
 
 /**
  * Initialize Express Application
@@ -110,8 +111,25 @@ logger.info("Application starting up", {
    */
   if (app.get("env") === "development") {
     await setupVite(app, server);
-  } else {
-    serveStatic(app);
+  } else { // Production mode
+    // Serve static files first for all non-/api paths
+    const distPath = path.resolve(process.cwd(), "dist", "public");
+    app.use((req, res, next) => {
+      if (req.url.startsWith('/api')) {
+        return next(); // Skip static serving for API routes
+      }
+      express.static(distPath)(req, res, next);
+    });
+
+    // Fallback to index.html for any non-API, non-static route
+    app.use((req, res) => {
+      if (req.url.startsWith('/api')) {
+        // If it's an API route and wasn't handled by registerRoutes, it's a 404
+        res.status(404).json({ message: "API endpoint not found" });
+      } else {
+        res.sendFile(path.resolve(distPath, "index.html"));
+      }
+    });
   }
 
   /**

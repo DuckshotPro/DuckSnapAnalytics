@@ -26,22 +26,24 @@ let useRedis = false;
 async function initializeRedis() {
   try {
     redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
-      maxRetriesPerRequest: 1,
-      lazyConnect: true,
-      enableOfflineQueue: false,
+      maxRetriesPerRequest: 3,
+      retryStrategy: (times) => {
+        if (times > 3) return null;
+        return Math.min(times * 50, 2000);
+      },
     });
     
     // Test the connection with timeout
     await Promise.race([
       redis.ping(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Redis connection timeout')), 2000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Redis connection timeout')), 10000))
     ]);
     
     useRedis = true;
     console.log('✅ Redis connected successfully');
     return true;
   } catch (error) {
-    console.log('📝 Redis not available, using in-memory fallback for development');
+    console.log('📝 Redis not available, using in-memory fallback for development. Error:', error instanceof Error ? error.message : error);
     if (redis) {
       redis.disconnect();
     }
@@ -55,22 +57,34 @@ async function initializeRedis() {
 export let dataFetchQueue: Bull.Queue | DevelopmentQueue;
 export let reportGenerationQueue: Bull.Queue | DevelopmentQueue;
 export let dataCleanupQueue: Bull.Queue | DevelopmentQueue;
-export let agentJobQueue: Bull.Queue | DevelopmentQueue;
+
+// Helper to push to Python Worker Queue
+export const pushToAgentWorker = async (jobName: string, data: any) => {
+  if (redis) {
+    try {
+      const payload = JSON.stringify(data);
+      await redis.lpush('ducksnap_tasks', payload);
+      console.log(`🚀 Pushed task to Python Worker: ${jobName}`, data);
+    } catch (error) {
+      console.error('❌ Failed to push task to Python Worker:', error);
+    }
+  } else {
+    console.log('⚠️ Redis not available. Cannot push to Python Worker.', data);
+  }
+};
 
 // Initialize queues
 async function initializeQueues() {
   const redisAvailable = await initializeRedis();
   
   if (redisAvailable && redis) {
-    dataFetchQueue = new Bull('data-fetch', { redis: { host: 'localhost', port: 6379 } });
-    reportGenerationQueue = new Bull('report-generation', { redis: { host: 'localhost', port: 6379 } });
-    dataCleanupQueue = new Bull('data-cleanup', { redis: { host: 'localhost', port: 6379 } });
-    agentJobQueue = new Bull('agent-job', { redis: { host: 'localhost', port: 6379 } });
+    dataFetchQueue = new Bull('data-fetch', process.env.REDIS_URL);
+    reportGenerationQueue = new Bull('report-generation', process.env.REDIS_URL);
+    dataCleanupQueue = new Bull('data-cleanup', process.env.REDIS_URL);
   } else {
     dataFetchQueue = new DevelopmentQueue('data-fetch');
     reportGenerationQueue = new DevelopmentQueue('report-generation');
     dataCleanupQueue = new DevelopmentQueue('data-cleanup');
-    agentJobQueue = new DevelopmentQueue('agent-job');
   }
 }
 
@@ -363,19 +377,6 @@ class SnapchatETLScheduler implements JobScheduler {
           error: error instanceof Error ? error.message : 'Unknown error'
         });
         
-        throw error;
-      }
-    });
-
-    agentJobQueue.process('run-agent-workflow', async (job) => {
-      const { userId } = job.data;
-      try {
-        console.log(`🤖 Running agent workflow for user ${userId}`);
-        const orchestrator = new OrchestratorAgent();
-        await orchestrator.run(userId);
-        console.log(`✅ Agent workflow completed for user ${userId}`);
-      } catch (error) {
-        console.error(`❌ Error running agent workflow for user ${userId}:`, error);
         throw error;
       }
     });
