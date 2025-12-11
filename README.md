@@ -71,8 +71,8 @@ DuckShots SnapAlytics offers a range of features to help Snapchat creators and m
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/duckshots-snapalytics.git
-   cd duckshots-snapalytics
+   git clone https://github.com/DuckshotPro/DuckSnapAnalytics.git
+   cd DuckSnapAnalytics
    ```
 
 2. Install dependencies:
@@ -123,7 +123,7 @@ If OAuth env vars are missing, the app will skip registering the Snapchat OAuth 
 ## 🧩 Project Structure
 
 ```
-duckshots-snapalytics/
+DuckSnapAnalytics/
 ├── client/               # Frontend code
 │   ├── src/
 │   │   ├── components/   # UI components
@@ -244,4 +244,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 📬 Contact
 
-For support or questions, please contact support@duckshotssnapalytics.com
+For support or questions, please contact support@duckshotanalytics.com

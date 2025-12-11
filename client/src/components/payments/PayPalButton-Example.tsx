@@ -9,7 +9,7 @@ import PayPalSubscriptionButton from '@/components/payments/PayPalSubscriptionBu
 
 {/* Monthly Plan Payment Button */ }
 <PayPalSubscriptionButton
-    planId={process.env.PAYPAL_MONTHLY_PLAN_ID || ''}
+    planId={import.meta.env.VITE_PAYPAL_MONTHLY_PLAN_ID || ''}
     billingPeriod="monthly"
     amount="19.99"
     buttonText="Upgrade to Premium"
@@ -22,7 +22,7 @@ import PayPalSubscriptionButton from '@/components/payments/PayPalSubscriptionBu
 
 {/* Yearly Plan Payment Button */ }
 <PayPalSubscriptionButton
-    planId={process.env.PAYPAL_YEARLY_PLAN_ID || ''}
+    planId={import.meta.env.VITE_PAYPAL_YEARLY_PLAN_ID || ''}
     billingPeriod="yearly"
     amount="191.90"
     buttonText="Upgrade to Premium (Save 20%)"
